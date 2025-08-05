@@ -133,7 +133,7 @@ build_app(hello
 build_app(bench_basic_a
     SOURCES
      bench_basic_a/bench_basic_a.c
-
+)
 
 build_app(bench_basic_b
     SOURCES

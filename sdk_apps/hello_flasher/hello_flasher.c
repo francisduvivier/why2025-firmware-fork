@@ -61,14 +61,10 @@ int get_local_version() {
 
 pid_t pid = -1;
 
-
 void restart_app(void) {
-    char *name = "hello";
+    char *name      = "hello";
     char *path = "FLASH0:hello.elf";
     printf("Starting %s (%s)\n", name, path);
-    if (pid != -1) {
-        process_kill(pid);
-    }
     pid = process_create(path, 8192, 0, NULL);
     if (pid == -1) {
         printf("Failed to start %s (%s)\n", name, path);

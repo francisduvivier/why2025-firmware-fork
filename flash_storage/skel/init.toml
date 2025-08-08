@@ -3,5 +3,5 @@ name = "hello_flasher"
 path = "FLASH0:hello_flasher.elf"
 restart_on_failure = false
 stack_size = 8192
+start_delay = 30
 args = []
-

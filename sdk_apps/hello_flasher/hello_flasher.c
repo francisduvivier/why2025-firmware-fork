@@ -10,9 +10,9 @@
 #include <unistd.h>
 
 #define VERSION_FILE        "FLASH0:hello_version.txt"
-#define ELF_FILE            "FLASH0:hello.elf"
-#define LATEST_VERSION_URL  "https://badge.why2025.org/api/v3/project-latest-revisions/badgehub_dev"
-#define DOWNLOAD_URL_FORMAT "https://badge.why2025.org/api/v3/projects/badgehub_dev/rev%d/files/hello.elf"
+#define ELF_FILE            "FLASH0:test_badge_hub_client.elf"
+#define LATEST_VERSION_URL  "https://badge.why2025.org/api/v3/project-latest-revisions/test_badge_hub_client"
+#define DOWNLOAD_URL_FORMAT "https://badge.why2025.org/api/v3/projects/test_badge_hub_client/rev%d/files/test_badge_hub_client.elf"
 #define VERBOSE 0
 #define CHECK_INTERVAL_SECONDS 1
 // Struct to hold memory buffer for curl responses
@@ -62,8 +62,8 @@ int get_local_version() {
 pid_t pid = -1;
 
 void restart_app(void) {
-    char *name      = "hello";
-    char *path = "FLASH0:hello.elf";
+    char *name = ELF_FILE;
+    char *path = ELF_FILE;
     printf("Starting %s (%s)\n", name, path);
     pid = process_create(path, 8192, 0, NULL);
     if (pid == -1) {

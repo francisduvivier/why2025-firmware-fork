@@ -2,7 +2,19 @@
 #define BADGEHUB_CLIENT_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+
+typedef struct http_data {
+    char  *memory;
+    size_t size;
+} http_data_t;
+
+typedef struct http_file {
+    FILE  *fp;
+    size_t size;
+} http_file_t;
 
 // Represents a project summary from the main project list.
 typedef struct {
@@ -50,4 +62,7 @@ bool download_project_file(const project_file_t* file_info, const char* project_
  */
 uint8_t* download_icon_to_memory(const char* icon_url, int* data_size);
 
+bool do_http(char const *url, http_data_t *response_data, http_file_t *http_file);
+
 #endif // BADGEHUB_CLIENT_H
+//

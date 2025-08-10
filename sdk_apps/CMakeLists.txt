@@ -29,6 +29,9 @@ set(APP_LINK_FLAGS
     -Wl,--strip-debug
     -Wl,--gc-sections
     -e main
+    # -shared
+    # -nostartfiles
+    # -nostdlib
 )
 
 set(APP_ELF_DIR ${CMAKE_BINARY_DIR}/app_elfs)
@@ -122,17 +125,17 @@ endfunction()
 
 build_app(hello_flasher
         SOURCES
-        hello_flasher/hello_flasher.c
+        hello_flasher.c
 )
 
 build_app(hello
     SOURCES
-     hello/main.c
+     main.c
 )
 
 build_app(bench_basic_a
     SOURCES
-     bench_basic_a/bench_basic_a.c
+     bench_basic_a.c
 )
 
 build_app(bench_basic_b
@@ -307,6 +310,25 @@ build_app(doomgeneric
      doomgeneric/w_main.c
      doomgeneric/w_wad.c
      doomgeneric/z_zone.c
+)
+
+build_app(test_badghub_client
+  SOURCES
+    main.c
+    utils.c
+    cJSON.c
+    cJSON_Utils.c
+    test_drawing_helper.c
+    badgehub_client.c
+    app_card.c
+    down_man.c
+    # os_client.c
+    # app_list.c
+    # app_home.c
+    # app_detail.c
+    # app_data_manager.c
+  LIBRARIES
+   sdl3
 )
 
 get_property(SDK_APP_ELFS GLOBAL PROPERTY SDK_APP_ELFS)

@@ -1,0 +1,10 @@
+{
+    "unique_identifier": "hello_flasher",
+    "name": "hello_flasher",
+    "author": "Team:Badge",
+    "version": "1",
+    "interpreter": "",
+    "metadata_file": "",
+    "binary_path": "hello_flasher.elf",
+    "source": 1
+}

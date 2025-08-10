@@ -1,0 +1,10 @@
+{
+    "unique_identifier": "test_badgehub_client",
+    "name": "test_badgehub_client",
+    "author": "Team:Badge",
+    "version": "1",
+    "interpreter": "",
+    "metadata_file": "",
+    "binary_path": "test_badge_hub_client.elf",
+    "source": 1
+}

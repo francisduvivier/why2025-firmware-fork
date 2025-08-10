@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <errno.h>
 
 // libcurl callback function to write received data into our MemoryStruct
 size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
@@ -55,7 +54,8 @@ void ensure_dir_exists(const char *path) {
         if (*p == '/') {
             *p = '\0'; // Temporarily terminate the string
             // Create directory, ignore error if it already exists
-            if (mkdir(path_copy, 0755) != 0 && errno != EEXIST) {
+            // if (mkdir(path_copy, 0755) != 0 && errno != EEXIST) {
+            if (mkdir(path_copy, 0755) != 0) {
                 fprintf(stderr, "Failed to create directory %s\n", path_copy);
             }
             *p = '/'; // Restore the slash

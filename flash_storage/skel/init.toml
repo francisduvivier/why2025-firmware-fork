@@ -1,7 +1,14 @@
+# [[apps]]
+# name = "ota_update"
+# path = "FLASH0:[BADGEVMS.APPS.ota_wifi_update]ota_wifi_update.elf"
+# restart_on_failure = false
+# stack_size = 8192
+# args = []
+
 [[apps]]
 name = "hello_flasher"
-path = "FLASH0:hello_flasher.elf"
+path = "FLASH0:[BADGEVMS.APPS.hello_flasher]hello_flasher.elf"
 restart_on_failure = false
 stack_size = 8192
-start_delay = 30
+start_delay = 10
 args = []

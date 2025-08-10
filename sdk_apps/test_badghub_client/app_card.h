@@ -1,23 +1,20 @@
 #ifndef APP_CARD_H
+
 #define APP_CARD_H
 
 #include "badgehub_client.h"
-#include "lvgl/lvgl.h"
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_render.h>
 
-typedef struct {
-    char* slug;
-    int revision;
-    char* icon_url; // Store the URL for on-demand loading
-    uint8_t* icon_data;
-    lv_image_dsc_t icon_dsc;
-} card_user_data_t;
+#define CHAR_WIDTH 8
+#define BOX_OFFSET 10
+#define CARD_DIST  5
 
-void create_app_card(lv_obj_t* parent, const project_t* project);
+int draw_app_card_detail(SDL_Renderer *renderer, int x, int y, project_detail_t app_info);
 
-/**
- * @brief Triggers the download and display of the icon for a specific card.
- * @param card A pointer to the card object.
- */
-void app_card_load_icon(lv_obj_t* card);
+int draw_app_card(SDL_Renderer *renderer, int x, int y, project_t app_info, bool show_rect);
 
-#endif // APP_CARD_H
+int draw_app_list(SDL_Renderer *renderer, int x, int y, project_t *apps, int apps_count, int focused_id);
+
+int draw_app_loading(SDL_Renderer *renderer, int x, int y);
+#endif /* end of include guard: APP_CARD_H */

@@ -29,7 +29,7 @@
 #endif
 
 #ifdef __GNUC__
-#pragma GCC visibility push(default)
+// #pragma GCC visibility push(default)
 #endif
 #if defined(_MSC_VER)
 #pragma warning (push)
@@ -53,7 +53,7 @@
 #pragma warning (pop)
 #endif
 #ifdef __GNUC__
-#pragma GCC visibility pop
+// #pragma GCC visibility pop
 #endif
 
 #include "cJSON.h"

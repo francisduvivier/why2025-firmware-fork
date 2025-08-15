@@ -3,6 +3,7 @@
 #define APP_CARD_H
 
 #include "badgehub_client.h"
+
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
 
@@ -16,5 +17,5 @@ int draw_app_card(SDL_Renderer *renderer, int x, int y, project_t app_info, bool
 
 int draw_app_list(SDL_Renderer *renderer, int x, int y, project_t *apps, int apps_count, int focused_id);
 
-int draw_app_loading(SDL_Renderer *renderer, int x, int y);
+int draw_app_loading(SDL_Renderer *renderer, int x, int y, char const *text);
 #endif /* end of include guard: APP_CARD_H */

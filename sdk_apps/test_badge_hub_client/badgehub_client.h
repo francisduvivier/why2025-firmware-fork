@@ -5,46 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "badgehub_client_new.h"
 
-typedef struct http_data {
-    char  *memory;
-    size_t size;
-} http_data_t;
-
-typedef struct http_file {
-    FILE  *fp;
-    size_t size;
-} http_file_t;
-
-// Represents a project summary from the main project list.
-typedef struct {
-    char *name;
-    char *slug;
-    char *description;
-    char *project_url;
-    char *icon_url; // We now store the URL, not the downloaded data.
-    int revision;
-} project_t;
-
-// Represents a single file within a project.
-typedef struct {
-    char *full_path;
-    char *sha256;
-    char *url;
-} project_file_t;
-
-// Represents the detailed information for a single project.
-typedef struct {
-    char *name;
-    char *description;
-    char *published_at;
-    char *author;
-    char *version;
-    char *slug;
-    int revision;
-    project_file_t *files;
-    int file_count;
-} project_detail_t;
 
 
 project_t *get_applications(int *project_count, const char* search_query, int limit, int offset);
@@ -62,7 +24,7 @@ bool download_project_file(const project_file_t* file_info, const char* project_
  */
 uint8_t* download_icon_to_memory(const char* icon_url, int* data_size);
 
-bool do_http(char const *url, http_data_t *response_data, http_file_t *http_file);
+// bool do_http(char const *url, http_data_t *response_data, http_file_t *http_file);
 
 #endif // BADGEHUB_CLIENT_H
 //

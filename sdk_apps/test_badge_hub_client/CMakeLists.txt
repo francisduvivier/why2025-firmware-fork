@@ -11,7 +11,8 @@ target_sources(badgehub-client PUBLIC
                 ./utils.c
                 ./app_card.c
                 ./test_drawing_helper.c
-                ./badgehub_client.c
+                # ./badgehub_client.c
+                ./badgehub_client_new.c
                 ./cJSON_Utils.c
 )
 target_include_directories(badgehub-client PUBLIC ./)

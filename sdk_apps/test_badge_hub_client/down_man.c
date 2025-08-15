@@ -3,13 +3,13 @@
 #include "badgehub_client.h"
 #include "badgevms/application.h"
 #include "badgevms/process.h"
-#include "cJSON.h"
+#include "utils.h"
 
 #include <stdbool.h>
 
 #include <string.h>
 
-bool install_application_file(project_detail_t *p, int *out_got_files) {
+bool install_application_file(project_detail_t *p, int *out_got_files, char **current_file_name) {
     //, char const *relative_file_name, char const *file_url) {
     bool  ret, update = false;
     char *absolute_file_name = NULL;
@@ -23,19 +23,20 @@ bool install_application_file(project_detail_t *p, int *out_got_files) {
         printf("Created app %s\n", p->slug);
         update = true;
     } else {
-        app = application_get(p->slug);
+        app    = application_get(p->slug);
         // if (strcmp(app->version, p->version) != 0) {
-            update = true;
+        update = true;
         // }
     }
     if (update) {
         for (int i = 0; i < p->file_count; i++) {
 
 
-            absolute_file_name = application_create_file_string(app, p->files->full_path);
+            *current_file_name = p->files[i].full_path;
+            absolute_file_name = application_create_file_string(app, p->files[i].full_path);
             printf("Application file name %s\n", absolute_file_name);
             if (!absolute_file_name) {
-                printf("Illegal file name %s\n", p->files->full_path);
+                printf("Illegal file name %s\n", p->files[i].full_path);
                 goto out;
             }
 
@@ -55,7 +56,7 @@ bool install_application_file(project_detail_t *p, int *out_got_files) {
             file_op.size = 0;
             file_op.fp   = f;
 
-            if (!do_http(p->files->url, NULL, &file_op)) {
+            if (!do_http(p->files[i].url, NULL, &file_op)) {
                 printf("Unable to write save tmpfile %s\n", tmpfile);
                 goto out;
             }
@@ -87,11 +88,11 @@ bool install_application_file(project_detail_t *p, int *out_got_files) {
     }
     application_free(a);
 
-    printf("Starting %s (%s)\n", p->slug, absolute_file_name);
-    int pid = process_create(absolute_file_name, 8192, 0, NULL);
-    if (pid == -1) {
-        printf("Failed to start %s (%s)\n", p->slug, absolute_file_name);
-    }
+    // printf("Starting %s (%s)\n", p->slug, absolute_file_name);
+    // int pid = process_create(absolute_file_name, 8192, 0, NULL);
+    // if (pid == -1) {
+    //     printf("Failed to start %s (%s)\n", p->slug, absolute_file_name);
+    // }
 
 
 

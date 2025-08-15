@@ -36,15 +36,17 @@ int draw_app_list(SDL_Renderer *renderer, int x, int y, project_t *apps, int app
     }
     for (int i = offset; i < apps_count; i++) {
         int shift = i - offset;
+        // printf("Project Name: %s\n", apps[i].name);
         draw_app_card(renderer, x, y + shift * scale, apps[i], focused_id == i);
     }
+    return 1;
 }
 
-int draw_app_loading(SDL_Renderer *renderer, int x, int y) {
+int draw_app_loading(SDL_Renderer *renderer, int x, int y, char const *text) {
 
-    int             len = strlen("Loading...");
+    int             len = strlen(text);
     SDL_FRect const r   = {.x = x, .y = y, .h = CHAR_WIDTH + BOX_OFFSET, .w = len * CHAR_WIDTH + BOX_OFFSET};
     SDL_SetRenderDrawColor(renderer, 100, 100, 100, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &r);
-    draw_text(renderer, "Loading...", x + BOX_OFFSET / 2, y + BOX_OFFSET / 2, 0xFFFFFF);
+    draw_text(renderer, text, x + BOX_OFFSET / 2, y + BOX_OFFSET / 2, 0xFFFFFF);
 }

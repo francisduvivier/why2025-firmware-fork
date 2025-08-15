@@ -1,5 +1,8 @@
 #include "app_card.h"
-#include "badgehub_client.h"
+// #include "SDL3/SDL_thread.h"
+// #include "badgehub_client.h"
+#include "badgehub_client_new.h"
+#include "badgevms/process.h"
 #include "down_man.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_scancode.h"
@@ -10,17 +13,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_oldnames.h>
+#include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_video.h>
+#include <unistd.h>
 #define SDL_MAIN_USE_CALLBACKS 1 /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
 
-#define WINDOW_WIDTH  720
-#define WINDOW_HEIGHT 720
-#define DISPLAY_ID    0
+#define WINDOW_WIDTH   720
+#define WINDOW_HEIGHT  720
+#define DISPLAY_ID     0
+#define ADJUST_DISPLAY 0
 
+
+
+/*! \enum UIStates
+ *
+ *  States the UI could be in.
+ */
+typedef enum {
+    APP_LIST,
+    APP_DETAIL,
+    APP_INSTALL,
+} UIStates;
+
+typedef struct {
+    project_detail_t *app;
+    char             *current_file_name;
+    int               got_files;
+    bool              error;
+} ThreadData;
 
 /*! \struct AppState
  *  \brief State of the Badgehub Client needed across threads
@@ -36,7 +61,12 @@ typedef struct {
     int           app_count;
     int           selected;
     bool          install;
+    pid_t         sdl_install_thread;
+    ThreadData   *thread_data;
+    UIStates      state;
 } AppState;
+
+
 
 SDL_AppResult handle_key_event_(void **appstate, SDL_Scancode key_code) {
     AppState *as = (AppState *)appstate;
@@ -59,49 +89,62 @@ SDL_AppResult handle_key_event_(void **appstate, SDL_Scancode key_code) {
 }
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
+    AppState     *as              = NULL;
+    project_t    *projects        = NULL;
+    char         *query           = "";
+    int           num_of_projects = -1;
+    int           d_number_of     = -1;
+    SDL_AppResult result          = SDL_APP_FAILURE;
+
     SDL_SetAppMetadata("Test Badgehub Client", "1.0", "test-debug-renderer");
-
-
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
+        goto out;
     }
     // allocate appstate and reassign
-    AppState *as = (AppState *)SDL_calloc(1, sizeof(AppState));
+    as = (AppState *)SDL_calloc(1, sizeof(AppState));
     if (!as) {
-        return SDL_APP_FAILURE;
+        result = SDL_APP_FAILURE;
+        goto out;
     }
-    as->window_height = WINDOW_HEIGHT;
-    as->window_width  = WINDOW_WIDTH;
+    as->window_height = WINDOW_HEIGHT / 2;
+    as->window_width  = WINDOW_WIDTH / 2;
     as->text_x        = 100;
     as->text_y        = 100;
     *appstate         = as;
 
-    //
-    int           *d_number_of = NULL;
-    SDL_DisplayID *d_ids       = SDL_GetDisplays(d_number_of);
-    if (d_ids || d_number_of) {
+    if (ADJUST_DISPLAY) {
+        SDL_DisplayID *d_ids = SDL_GetDisplays(&d_number_of);
+        if (d_ids || d_number_of) {
 
-        SDL_DisplayMode const *d_mode = SDL_GetCurrentDisplayMode(d_ids[DISPLAY_ID]);
+            SDL_DisplayMode const *d_mode = SDL_GetCurrentDisplayMode(d_ids[DISPLAY_ID]);
 
-        if (d_mode) {
-            as->window_width  = d_mode->w / 2;
-            as->window_height = d_mode->h / 2;
+            if (d_mode) {
+                // increase font size
+                as->window_width  = d_mode->w / 2;
+                as->window_height = d_mode->h / 2;
+            } else {
+                printf(
+                    "Couldn't get display informations for display %d. Number of Displays: %d\n",
+                    DISPLAY_ID,
+                    d_number_of
+                );
+            }
         } else {
-            // TODO
+            printf("Couldn't get SDL displays.\n");
         }
-    } else {
-        // TODO
+        SDL_free(d_ids);
     }
 
-    char *query = "";
-
     printf("Getting applications\n");
-    project_t *p = get_applications(&as->app_count, query, 50, 0);
-    if (p) {
-        printf("1. Project name: %s\n", p[0].name);
-        as->apps = p;
+    projects = get_projects(query, 50, 0, &num_of_projects);
+    printf("%x\n", projects);
+    printf("Number of Project: %d\n", num_of_projects);
+    if (projects) {
+        printf("1. Project name: %s\n", projects[0].name);
+        as->apps      = projects;
+        as->app_count = num_of_projects;
     } else {
         printf("ERROR getting applications!\n");
     }
@@ -111,12 +154,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
             "TestBadgehubClient",
             as->window_width,
             as->window_height,
+            // 0,
             SDL_WINDOW_FULLSCREEN,
             &as->sdl_window,
             &as->sdl_renderer
         )) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
+        result = SDL_APP_FAILURE;
+        goto out;
     }
 
     SDL_SetRenderLogicalPresentation(
@@ -125,8 +170,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         as->window_height,
         SDL_LOGICAL_PRESENTATION_INTEGER_SCALE
     );
+    result = SDL_APP_CONTINUE; /* carry on with the program! */
 
-    return SDL_APP_CONTINUE; /* carry on with the program! */
+out:
+    return result;
 }
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
@@ -138,13 +185,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
     }
 }
 
-/* This function runs once per frame, and is the heart of the program. */
-SDL_AppResult SDL_AppIterate(void *appstate) {
-
-    // printf("AppIterate...\n");
-    AppState *as = (AppState *)appstate;
-
-    // #ffffcc
+SDL_AppResult draw_main_screen(AppState *as) {
     SDL_SetRenderDrawColor(as->sdl_renderer, 255, 255, 194, SDL_ALPHA_OPAQUE);
     SDL_FRect r = {0, 0, as->window_width, as->window_height};
     SDL_RenderFillRect(as->sdl_renderer, &r);
@@ -152,27 +193,97 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
     draw_app_list(as->sdl_renderer, 10, 10, as->apps, as->app_count, as->selected);
 
-    // draw_text(as->sdl_renderer, "This is a renderer Text, how amazing is that!!", as->text_x, as->text_y, 0x0);
+    return SDL_APP_CONTINUE;
+}
 
-    SDL_RenderPresent(as->sdl_renderer); /* put it all on the screen! */
+void install_app(void *data) {
+    ThreadData *t_data = NULL;
+    if (data) {
+        t_data = (ThreadData *)data;
+    } else {
+        printf("No data given to thread, exiting...\n");
+        t_data->error = true;
+    }
+    printf("Start downloading..\n");
+    sleep(5);
+    if (!install_application_file(t_data->app, &(t_data->got_files), &(t_data->current_file_name))) {
+        printf("Unable to install files!!\n");
+        t_data->error = true;
+    }
+    printf("Finished downloading..\n");
+    t_data->error = false;
+}
 
-    if (as->install) {
-        printf("Start downloading..\n");
-        project_t         selected         = as->apps[as->selected];
-        project_detail_t *detail           = get_project_details(selected.slug, selected.revision);
-        int               downloaded_files = 0;
-        draw_app_loading(as->sdl_renderer, WINDOW_WIDTH / 4, WINDOW_HEIGHT / 4);
-        if (!install_application_file(detail, &downloaded_files)) {
-            printf("Unable to install files!!\n");
+
+SDL_AppResult draw_app_install(AppState *as) {
+    SDL_AppResult result = SDL_APP_CONTINUE;
+    char         *text   = NULL;
+    pid_t         pid    = wait(false, 100);
+    if (pid == as->sdl_install_thread) {
+        int state = as->thread_data->error;
+        if (state) {
+            draw_app_loading(as->sdl_renderer, as->window_width / 4, as->window_width / 4, "ERROR Downloading!");
+            sleep(1);
+            result = SDL_APP_FAILURE;
+            printf("Error in Thread!\n");
         } else {
-            while (downloaded_files < detail->file_count) {
-                printf("Got files: %d\n", downloaded_files);
-                sleep(1);
-            }
+            draw_app_loading(as->sdl_renderer, as->window_width / 4, as->window_width / 4, "Finished Downloading!");
+            sleep(1);
+            printf("Finished Installing\n");
         }
         as->install = false;
-        free_project_details(detail);
     }
+    if (as->install) {
+        asprintf(
+            &text,
+            "Downloading '%s'... (%d/%d)",
+            as->thread_data->current_file_name,
+            as->thread_data->got_files,
+            as->thread_data->app->file_count
+        );
+        draw_app_loading(as->sdl_renderer, as->window_width / 4, as->window_width / 4, text);
+    }
+    return result;
+}
+
+/* This function runs once per frame, and is the heart of the program. */
+SDL_AppResult SDL_AppIterate(void *appstate) {
+
+    AppState *as = (AppState *)appstate;
+
+    // #ffffcc
+    draw_main_screen(as);
+
+    // draw_text(as->sdl_renderer, "This is a renderer Text, how amazing is that!!", as->text_x, as->text_y, 0x0);
+
+
+    if (as->install) {
+        if (!as->sdl_install_thread) {
+            project_t         selected = as->apps[as->selected];
+            project_detail_t *detail   = get_project_details(selected.slug, selected.revision);
+            if (!detail) {
+                printf("Error getting project detail for '%s'\n", selected.slug);
+                as->install = false;
+            }
+            if (!as->thread_data) {
+                as->thread_data                    = malloc(sizeof(ThreadData));
+                as->thread_data->current_file_name = "";
+                as->thread_data->app               = detail;
+                as->thread_data->got_files         = -1;
+            }
+
+            as->sdl_install_thread = thread_create(&install_app, as->thread_data, 8192);
+            if (!as->sdl_install_thread) {
+                printf("Error Starting Install Thread \n");
+                as->install = false;
+            }
+        }
+
+        if (draw_app_install(as) == SDL_APP_FAILURE)
+            printf("Failed draw app installing!\n");
+    }
+
+    SDL_RenderPresent(as->sdl_renderer); /* put it all on the screen! */
 
     return SDL_APP_CONTINUE; /* carry on with the program! */
 }
@@ -186,50 +297,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
         SDL_DestroyRenderer(as->sdl_renderer);
         SDL_DestroyWindow(as->sdl_window);
         SDL_free(as);
+        wait(true, 1000);
     }
     /* SDL will clean up the window/renderer for us. */
 }
-
-
-
-//
-// int main(int argc, char **argv)
-// {
-//     (void)argc;
-//     (void)argv;
-//
-//     lv_init();
-//     hal_init(720, 720);
-//
-//     // Create the main application UI using the new home screen
-//     create_app_home_view();
-//
-//     while (1)
-//     {
-//         lv_timer_handler();
-// #ifdef _MSC_VER
-//         Sleep(5);
-// #else
-//         usleep(5 * 1000);
-// #endif
-//     }
-//
-//     return 0;
-// }
-//
-// static lv_display_t *hal_init(int32_t w, int32_t h)
-// {
-//     lv_group_set_default(lv_group_create());
-//     lv_display_t *disp = lv_sdl_window_create(w, h);
-//     lv_indev_t *mouse = lv_sdl_mouse_create();
-//     lv_indev_set_group(mouse, lv_group_get_default());
-//     lv_indev_set_display(mouse, disp);
-//     lv_display_set_default(disp);
-//     lv_indev_t *mousewheel = lv_sdl_mousewheel_create();
-//     lv_indev_set_display(mousewheel, disp);
-//     lv_indev_set_group(mousewheel, lv_group_get_default());
-//     lv_indev_t *kb = lv_sdl_keyboard_create();
-//     lv_indev_set_display(kb, disp);
-//     lv_indev_set_group(kb, lv_group_get_default());
-//     return disp;
-// }

@@ -1,0 +1,10 @@
+{
+    "unique_identifier": "mpy",
+    "name": "mpy",
+    "author": "jnms",
+    "version": "1",
+    "interpreter": "mpy",
+    "metadata_file": "",
+    "binary_path": "mpy.py",
+    "source": 1
+}

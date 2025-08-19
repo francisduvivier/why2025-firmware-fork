@@ -1,8 +1,16 @@
 [[apps]]
 name = "sponsors"
-application = "why2025_sponsors"
-path = "APPS:[why2025_sponsors]why2025_sponsors.elf"
+application = "badgevms_launcher"
+path = "APPS:[badgevms_launcher]badgevms_launcher.elf"
 restart_on_failure = false
 stack_size = 16384
-run_once = true
-#args = ["--boot"]
+args = ["--boot"]
+
+[[apps]]
+name = "mpydaemon"
+path = "APPS:[mpy]mpy.elf"
+restart_on_failure = true
+stack_size = 8192
+start_delay = 0
+start_every = 2
+args = ["--heapsize=2M", "APPS:[mpydaemon]mpydaemon.py"]

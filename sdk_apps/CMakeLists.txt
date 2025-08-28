@@ -307,6 +307,12 @@ build_app(bmi270_test
      bmi270_test.c
 )
 
+
+build_app(bme690_test
+    SOURCES
+     bme690_test.c
+)
+
 build_app(curl_test
     SOURCES
      curl_test.c
